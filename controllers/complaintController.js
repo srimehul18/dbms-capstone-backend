@@ -70,15 +70,38 @@ function handleComplaintError(error, res, action) {
   })
 }
 
+
 export async function getComplaints(req, res) {
   try {
     const complaints = await getAllComplaints()
-    res.json(complaints)
+    const residentId = req.query.residentId
+
+    if (residentId !== undefined) {
+      const id = Number(residentId)
+
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+          message: "Invalid resident ID"
+        })
+      }
+
+      const residentComplaints = complaints.filter(
+        (complaint) => Number(complaint.residentId) === id
+      )
+
+      return res.status(200).json(residentComplaints)
+    }
+
+    return res.status(200).json(complaints)
   } catch (error) {
     console.error("Failed to fetch complaints:", error.message)
-    res.status(500).json({ message: "Failed to fetch complaints" })
+
+    return res.status(500).json({
+      message: "Failed to fetch complaints"
+    })
   }
 }
+
 
 export async function addComplaint(req, res) {
   const data = validateComplaint(req.body)
