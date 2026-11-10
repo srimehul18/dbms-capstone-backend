@@ -113,58 +113,41 @@ export const checkInVisitor = async ({
   }
 }
 
+
 export const checkOutVisitor = async (logId) => {
-  const connection = await db.getConnection()
+  const [logs] = await db.query(
+    `SELECT visitor_id AS visitorId, exit_time AS exitTime
+     FROM securitylog
+     WHERE log_id = ?`,
+    [logId]
+  )
+
+  if (!logs.length) {
+    const error = new Error("Security log not found.")
+    error.statusCode = 404
+    throw error
+  }
+
+  if (logs[0].exitTime !== null) {
+    const error = new Error(
+      "This security log has already been checked out."
+    )
+    error.statusCode = 409
+    throw error
+  }
 
   try {
-    await connection.beginTransaction()
-
-    const [logs] = await connection.query(
-      `SELECT log_id, visitor_id, exit_time
-       FROM securitylog
-       WHERE log_id = ?
-       FOR UPDATE`,
-      [logId]
+    await db.query(
+      "CALL check_out_visitor(?)",
+      [logs[0].visitorId]
     )
-
-    if (!logs.length) {
-      const error = new Error("Security log not found.")
-      error.statusCode = 404
-      throw error
-    }
-
-    const log = logs[0]
-
-    if (log.exit_time !== null) {
-      const error = new Error(
-        "This security log has already been checked out."
-      )
-      error.statusCode = 409
-      throw error
-    }
-
-    await connection.query(
-      `UPDATE securitylog
-       SET exit_time = CURRENT_TIMESTAMP
-       WHERE log_id = ?`,
-      [logId]
-    )
-
-    await connection.query(
-      `UPDATE visitor
-       SET exit_time = CURRENT_TIMESTAMP,
-           status = 'Checked Out'
-       WHERE visitor_id = ?`,
-      [log.visitor_id]
-    )
-
-    await connection.commit()
-
-    return await getSecurityLogById(logId)
   } catch (error) {
-    await connection.rollback()
+    if (error.code === "ER_SIGNAL_EXCEPTION") {
+      error.statusCode = 409
+    }
+
     throw error
-  } finally {
-    connection.release()
   }
+
+  return getSecurityLogById(logId)
 }

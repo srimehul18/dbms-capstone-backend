@@ -35,82 +35,31 @@ export const getVisitorById = async (id) => {
   return rows[0] || null
 }
 
+
 export const createVisitor = async (data) => {
-  const connection = await db.getConnection()
-  let visitorId
+  const {
+    residentId,
+    name,
+    phone,
+    purpose
+  } = data
 
-  try {
-    await connection.beginTransaction()
-
-    const {
+  const [result] = await db.query(
+    "CALL check_in_visitor(?, ?, ?, ?, ?)",
+    [
       residentId,
-      name,
-      phone,
-      purpose
-    } = data
+      name.trim(),
+      phone?.trim() || null,
+      purpose?.trim() || null,
+      null
+    ]
+  )
 
-    const [visitorResult] = await connection.query(
-      `INSERT INTO Visitor
-        (resident_id, name, phone, purpose, entry_time, exit_time, status)
-       VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, NULL, 'Inside')`,
-      [
-        residentId,
-        name.trim(),
-        phone?.trim() || null,
-        purpose?.trim() || null
-      ]
-    )
-
-    visitorId = visitorResult.insertId
-
-    const [visitorRows] = await connection.query(
-      `SELECT entry_time
-       FROM Visitor
-       WHERE visitor_id = ?
-       FOR UPDATE`,
-      [visitorId]
-    )
-
-    if (!visitorRows.length) {
-      throw new Error("The visitor record could not be retrieved.")
-    }
-
-    const entryTime = visitorRows[0].entry_time
-
-    const [existingLogs] = await connection.query(
-      `SELECT log_id
-       FROM securitylog
-       WHERE visitor_id = ?
-       LIMIT 1
-       FOR UPDATE`,
-      [visitorId]
-    )
-
-    if (existingLogs.length > 0) {
-      throw new Error("A security log already exists for this visitor.")
-    }
-
-    await connection.query(
-      `INSERT INTO securitylog
-        (visitor_id, staff_id, entry_time, exit_time, remarks)
-       VALUES (?, NULL, ?, NULL, ?)`,
-      [
-        visitorId,
-        entryTime,
-        "Visitor registered and checked in"
-      ]
-    )
-
-    await connection.commit()
-  } catch (error) {
-    await connection.rollback()
-    throw error
-  } finally {
-    connection.release()
-  }
+  const visitorId = result[0][0].visitor_id
 
   return getVisitorById(visitorId)
 }
+
 
 export const updateVisitor = async (id, data) => {
   const {
