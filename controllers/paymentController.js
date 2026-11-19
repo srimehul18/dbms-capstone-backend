@@ -14,7 +14,7 @@ const getResidentApartmentId = async (residentId) => {
 
   const [rows] = await db.query(
     `SELECT apartment_id
-     FROM Resident
+     FROM resident
      WHERE resident_id = ?`,
     [Number(residentId)]
   )
@@ -180,7 +180,7 @@ export const getPayments = async (req, res) => {
 
       const [bills] = await db.query(
         `SELECT bill_id
-         FROM MaintenanceBill
+         FROM maintenancebill
          WHERE apartment_id = ?`,
         [apartmentId]
       )

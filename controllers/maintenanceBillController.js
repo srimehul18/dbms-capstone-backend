@@ -97,7 +97,7 @@ const getResidentApartmentId = async (residentId) => {
 
   const [rows] = await pool.execute(
     `SELECT apartment_id
-     FROM Resident
+     FROM resident
      WHERE resident_id = ?
        AND status = 'Active'`,
     [id]
@@ -132,7 +132,7 @@ export const getBills = async (req, res) => {
 
       const [residents] = await db.query(
         `SELECT apartment_id
-         FROM Resident
+         FROM resident
          WHERE resident_id = ?`,
         [id]
       )
