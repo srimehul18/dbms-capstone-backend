@@ -11,7 +11,7 @@ export async function getAllApartments() {
       type,
       area,
       status
-    FROM Apartment
+    FROM apartment
     ORDER BY block, floor, apartment_no
   `)
 
@@ -20,7 +20,7 @@ export async function getAllApartments() {
 
 export async function createApartment(data) {
   const [result] = await pool.execute(
-    `INSERT INTO Apartment
+    `INSERT INTO apartment
       (apartment_no, block, floor, type, area, status)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [
@@ -42,7 +42,7 @@ export async function createApartment(data) {
       type,
       area,
       status
-     FROM Apartment
+     FROM apartment
      WHERE apartment_id = ?`,
     [result.insertId]
   )
@@ -52,7 +52,7 @@ export async function createApartment(data) {
 
 export async function updateApartment(id, data) {
   await pool.execute(
-    `UPDATE Apartment
+    `UPDATE apartment
      SET apartment_no = ?,
          block = ?,
          floor = ?,
@@ -80,7 +80,7 @@ export async function updateApartment(id, data) {
       type,
       area,
       status
-     FROM Apartment
+     FROM apartment
      WHERE apartment_id = ?`,
     [id]
   )
@@ -90,7 +90,7 @@ export async function updateApartment(id, data) {
 
 export async function deleteApartment(id) {
   const [result] = await pool.execute(
-    "DELETE FROM Apartment WHERE apartment_id = ?",
+    "DELETE FROM apartment WHERE apartment_id = ?",
     [id]
   )
 
