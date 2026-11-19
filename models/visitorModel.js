@@ -12,9 +12,9 @@ const visitorSelect = `
     DATE_FORMAT(v.entry_time, '%Y-%m-%d %H:%i:%s') AS entryTime,
     DATE_FORMAT(v.exit_time, '%Y-%m-%d %H:%i:%s') AS exitTime,
     v.status AS status
-  FROM Visitor v
-  LEFT JOIN Resident r ON r.resident_id = v.resident_id
-  LEFT JOIN Apartment a ON a.apartment_id = r.apartment_id
+  FROM visitor v
+  LEFT JOIN resident r ON r.resident_id = v.resident_id
+  LEFT JOIN apartment a ON a.apartment_id = r.apartment_id
 `
 
 export const getAllVisitors = async () => {
@@ -73,7 +73,7 @@ export const updateVisitor = async (id, data) => {
   } = data
 
   const [result] = await db.query(
-    `UPDATE Visitor
+    `UPDATE visitor
      SET resident_id = ?,
          name = ?,
          phone = ?,
@@ -104,7 +104,7 @@ export const updateVisitor = async (id, data) => {
 
 export const deleteVisitor = async (id) => {
   const [result] = await db.query(
-    "DELETE FROM Visitor WHERE visitor_id = ?",
+    "DELETE FROM visitor WHERE visitor_id = ?",
     [id]
   )
 

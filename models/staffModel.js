@@ -11,7 +11,7 @@ export async function getAllStaff() {
       phone,
       email,
       status
-    FROM Staff
+    FROM staff
     ORDER BY staff_id DESC
   `)
 
@@ -20,7 +20,7 @@ export async function getAllStaff() {
 
 export async function createStaff(data) {
   const [result] = await pool.execute(
-    `INSERT INTO Staff
+    `INSERT INTO staff
       (name, role, department, phone, email, status)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [
@@ -42,7 +42,7 @@ export async function createStaff(data) {
       phone,
       email,
       status
-     FROM Staff
+     FROM staff
      WHERE staff_id = ?`,
     [result.insertId]
   )
@@ -52,7 +52,7 @@ export async function createStaff(data) {
 
 export async function updateStaff(id, data) {
   await pool.execute(
-    `UPDATE Staff
+    `UPDATE staff
      SET name = ?,
          role = ?,
          department = ?,
@@ -80,7 +80,7 @@ export async function updateStaff(id, data) {
       phone,
       email,
       status
-     FROM Staff
+     FROM staff
      WHERE staff_id = ?`,
     [id]
   )
@@ -90,7 +90,7 @@ export async function updateStaff(id, data) {
 
 export async function deleteStaff(id) {
   const [result] = await pool.execute(
-    "DELETE FROM Staff WHERE staff_id = ?",
+    "DELETE FROM staff WHERE staff_id = ?",
     [id]
   )
 

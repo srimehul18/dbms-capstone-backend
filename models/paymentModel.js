@@ -14,8 +14,8 @@ const paymentSelect = `
     p.bill_id AS billId,
     (
       SELECT r.name
-      FROM Resident r
-      JOIN MaintenanceBill mb2
+      FROM resident r
+      JOIN maintenancebill mb2
         ON mb2.apartment_id = r.apartment_id
       WHERE mb2.bill_id = p.bill_id
       ORDER BY r.resident_id
@@ -26,7 +26,7 @@ const paymentSelect = `
     p.method AS method,
     p.reference_no AS referenceNo,
     p.status AS status
-  FROM Payment p
+  FROM payment p
 `
 
 const getPaymentByIdWithConnection = async (connection, id) => {
@@ -45,7 +45,7 @@ const lockBills = async (connection, billIds) => {
   for (const billId of ids) {
     const [rows] = await connection.query(
       `SELECT bill_id, amount, late_fee
-       FROM MaintenanceBill
+       FROM maintenancebill
        WHERE bill_id = ?
        FOR UPDATE`,
       [billId]
@@ -109,7 +109,7 @@ const validateSuccessfulPayment = async (
 
   const [billRows] = await connection.query(
     `SELECT amount, late_fee
-     FROM MaintenanceBill
+     FROM maintenancebill
      WHERE bill_id = ?`,
     [billId]
   )
@@ -120,7 +120,7 @@ const validateSuccessfulPayment = async (
 
   const [paymentRows] = await connection.query(
     `SELECT COALESCE(SUM(amount_paid), 0) AS total_paid
-     FROM Payment
+     FROM payment
      WHERE bill_id = ?
        AND status = 'Successful'
        AND pay_date <= CURRENT_TIMESTAMP
@@ -187,7 +187,7 @@ export const createPayment = async (data) => {
     }
 
     const [result] = await connection.query(
-      `INSERT INTO Payment
+      `INSERT INTO payment
         (bill_id, amount_paid, pay_date, method, reference_no, status)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
@@ -224,7 +224,7 @@ export const updatePayment = async (id, data) => {
 
     const [existingRows] = await connection.query(
       `SELECT *
-       FROM Payment
+       FROM payment
        WHERE payment_id = ?
        FOR UPDATE`,
       [id]
@@ -268,7 +268,7 @@ export const updatePayment = async (id, data) => {
     }
 
     await connection.query(
-      `UPDATE Payment
+      `UPDATE payment
        SET bill_id = ?,
            amount_paid = ?,
            pay_date = ?,
@@ -311,7 +311,7 @@ export const deletePayment = async (id) => {
 
     const [rows] = await connection.query(
       `SELECT payment_id, bill_id, status
-       FROM Payment
+       FROM payment
        WHERE payment_id = ?
        FOR UPDATE`,
       [id]
@@ -333,7 +333,7 @@ export const deletePayment = async (id) => {
     await lockBills(connection, [payment.bill_id])
 
     await connection.query(
-      "DELETE FROM Payment WHERE payment_id = ?",
+      "DELETE FROM payment WHERE payment_id = ?",
       [id]
     )
 

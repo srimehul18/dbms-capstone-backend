@@ -8,7 +8,7 @@ const billSelect = `
     a.apartment_no AS apartment,
     (
       SELECT r.name
-      FROM Resident r
+      FROM resident r
       WHERE r.apartment_id = f.apartment_id
       ORDER BY r.resident_id
       LIMIT 1
@@ -26,7 +26,7 @@ const billSelect = `
     f.overpayment_amount AS overpaymentAmount,
     f.stored_status AS storedStatus
   FROM v_maintenance_bill_financials f
-  JOIN Apartment a
+  JOIN apartment a
     ON a.apartment_id = f.apartment_id
 `
 
@@ -60,7 +60,7 @@ export const createBill = async (data) => {
   const dueDate = `${month}-10`
 
   const [result] = await db.query(
-    `INSERT INTO MaintenanceBill
+    `INSERT INTO maintenancebill
       (
         apartment_id,
         billing_month,
@@ -94,7 +94,7 @@ export const updateBill = async (id, data) => {
   const dueDate = `${month}-10`
 
   const [result] = await db.query(
-    `UPDATE MaintenanceBill
+    `UPDATE maintenancebill
      SET apartment_id = ?,
          billing_month = ?,
          amount = ?,
@@ -123,7 +123,7 @@ export const updateBill = async (id, data) => {
 
 export const deleteBill = async (id) => {
   const [result] = await db.query(
-    "DELETE FROM MaintenanceBill WHERE bill_id = ?",
+    "DELETE FROM maintenancebill WHERE bill_id = ?",
     [id]
   )
 

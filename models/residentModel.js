@@ -11,8 +11,8 @@ export async function getAllResidents() {
       r.email,
       r.role,
       r.status
-    FROM Resident r
-    JOIN Apartment a
+    FROM resident r
+    JOIN apartment a
       ON r.apartment_id = a.apartment_id
     ORDER BY r.resident_id
   `);
@@ -28,7 +28,7 @@ export async function createResident(data) {
 
     const [apartments] = await connection.execute(
       `SELECT apartment_id
-       FROM Apartment
+       FROM apartment
        WHERE apartment_no = ?`,
       [data.apartment.trim()]
     );
@@ -40,7 +40,7 @@ export async function createResident(data) {
     }
 
     const [result] = await connection.execute(
-      `INSERT INTO Resident
+      `INSERT INTO resident
        (apartment_id, name, phone, email, role, status)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
@@ -64,8 +64,8 @@ export async function createResident(data) {
          r.email,
          r.role,
          r.status
-       FROM Resident r
-       JOIN Apartment a
+       FROM resident r
+       JOIN apartment a
          ON r.apartment_id = a.apartment_id
        WHERE r.resident_id = ?`,
       [result.insertId]
@@ -83,10 +83,10 @@ export async function createResident(data) {
 
 export async function updateResident(id, data) {
   const [result] = await pool.execute(
-    `UPDATE Resident
+    `UPDATE resident
      SET apartment_id = (
        SELECT apartment_id
-       FROM Apartment
+       FROM apartment
        WHERE apartment_no = ?
      ),
      name = ?,
@@ -97,7 +97,7 @@ export async function updateResident(id, data) {
      WHERE resident_id = ?
      AND EXISTS (
        SELECT 1
-       FROM Apartment
+       FROM apartment
        WHERE apartment_no = ?
      )`,
     [
@@ -114,7 +114,7 @@ export async function updateResident(id, data) {
 
   if (result.affectedRows === 0) {
     const [rows] = await pool.execute(
-      "SELECT resident_id FROM Resident WHERE resident_id = ?",
+      "SELECT resident_id FROM resident WHERE resident_id = ?",
       [id]
     )
 
@@ -134,8 +134,8 @@ export async function updateResident(id, data) {
       r.email,
       r.role,
       r.status
-     FROM Resident r
-     JOIN Apartment a ON r.apartment_id = a.apartment_id
+     FROM resident r
+     JOIN apartment a ON r.apartment_id = a.apartment_id
      WHERE r.resident_id = ?`,
     [id]
   )
@@ -145,7 +145,7 @@ export async function updateResident(id, data) {
 
 export async function deleteResident(id) {
   const [result] = await pool.execute(
-    "DELETE FROM Resident WHERE resident_id = ?",
+    "DELETE FROM resident WHERE resident_id = ?",
     [id]
   )
 

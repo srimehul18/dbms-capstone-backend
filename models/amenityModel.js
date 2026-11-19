@@ -10,7 +10,7 @@ export const getAllAmenities = async () => {
       capacity,
       booking_fee AS fee,
       status
-    FROM Amenity
+    FROM amenity
     ORDER BY amenity_id DESC
   `)
 
@@ -28,7 +28,7 @@ export const createAmenity = async (data) => {
   } = data
 
   const [result] = await db.query(
-    `INSERT INTO Amenity
+    `INSERT INTO amenity
       (name, description, location, capacity, booking_fee, status)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [
@@ -50,7 +50,7 @@ export const createAmenity = async (data) => {
        capacity,
        booking_fee AS fee,
        status
-     FROM Amenity
+     FROM amenity
      WHERE amenity_id = ?`,
     [result.insertId]
   )
@@ -69,7 +69,7 @@ export const updateAmenity = async (id, data) => {
   } = data
 
   const [result] = await db.query(
-    `UPDATE Amenity
+    `UPDATE amenity
      SET name = ?,
          description = ?,
          location = ?,
@@ -90,7 +90,7 @@ export const updateAmenity = async (id, data) => {
 
   if (result.affectedRows === 0) {
     const [existing] = await db.query(
-      "SELECT amenity_id FROM Amenity WHERE amenity_id = ?",
+      "SELECT amenity_id FROM amenity WHERE amenity_id = ?",
       [id]
     )
 
@@ -106,7 +106,7 @@ export const updateAmenity = async (id, data) => {
        capacity,
        booking_fee AS fee,
        status
-     FROM Amenity
+     FROM amenity
      WHERE amenity_id = ?`,
     [id]
   )
@@ -116,7 +116,7 @@ export const updateAmenity = async (id, data) => {
 
 export const deleteAmenity = async (id) => {
   const [result] = await db.query(
-    "DELETE FROM Amenity WHERE amenity_id = ?",
+    "DELETE FROM amenity WHERE amenity_id = ?",
     [id]
   )
 

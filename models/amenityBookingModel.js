@@ -13,9 +13,9 @@ const bookingSelect = `
     ab.purpose AS purpose,
     ab.amount_paid AS amountPaid,
     ab.status AS status
-  FROM AmenityBooking ab
-  JOIN Resident r ON r.resident_id = ab.resident_id
-  JOIN Amenity a ON a.amenity_id = ab.amenity_id
+  FROM amenitybooking ab
+  JOIN resident r ON r.resident_id = ab.resident_id
+  JOIN amenity a ON a.amenity_id = ab.amenity_id
 `
 
 export const getAllBookings = async () => {
@@ -94,7 +94,7 @@ export const updateBooking = async (id, data) => {
   } = data
 
   const [result] = await db.query(
-    `UPDATE AmenityBooking
+    `UPDATE amenitybooking
      SET resident_id = ?,
          amenity_id = ?,
          start_time = ?,
@@ -125,7 +125,7 @@ export const updateBooking = async (id, data) => {
 
 export const deleteBooking = async (id) => {
   const [result] = await db.query(
-    "DELETE FROM AmenityBooking WHERE booking_id = ?",
+    "DELETE FROM amenitybooking WHERE booking_id = ?",
     [id]
   )
 

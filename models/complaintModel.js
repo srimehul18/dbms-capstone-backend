@@ -16,9 +16,9 @@ export async function getAllComplaints() {
       c.status,
       c.created_date AS createdDate,
       c.resolved_date AS resolvedDate
-    FROM Complaint c
-    JOIN Resident r ON c.resident_id = r.resident_id
-    LEFT JOIN Staff s ON c.staff_id = s.staff_id
+    FROM complaint c
+    JOIN resident r ON c.resident_id = r.resident_id
+    LEFT JOIN staff s ON c.staff_id = s.staff_id
     ORDER BY c.complaint_id DESC
   `)
 
@@ -27,7 +27,7 @@ export async function getAllComplaints() {
 
 export async function createComplaint(data) {
   const [result] = await pool.execute(
-    `INSERT INTO Complaint
+    `INSERT INTO complaint
       (
         resident_id,
         staff_id,
@@ -63,9 +63,9 @@ export async function createComplaint(data) {
       c.status,
       c.created_date AS createdDate,
       c.resolved_date AS resolvedDate
-     FROM Complaint c
-     JOIN Resident r ON c.resident_id = r.resident_id
-     LEFT JOIN Staff s ON c.staff_id = s.staff_id
+     FROM complaint c
+     JOIN resident r ON c.resident_id = r.resident_id
+     LEFT JOIN staff s ON c.staff_id = s.staff_id
      WHERE c.complaint_id = ?`,
     [result.insertId]
   )
@@ -75,7 +75,7 @@ export async function createComplaint(data) {
 
 export async function updateComplaint(id, data) {
   await pool.execute(
-    `UPDATE Complaint
+    `UPDATE complaint
      SET resident_id = ?,
          staff_id = ?,
          title = ?,
@@ -117,9 +117,9 @@ export async function updateComplaint(id, data) {
       c.status,
       c.created_date AS createdDate,
       c.resolved_date AS resolvedDate
-     FROM Complaint c
-     JOIN Resident r ON c.resident_id = r.resident_id
-     LEFT JOIN Staff s ON c.staff_id = s.staff_id
+     FROM complaint c
+     JOIN resident r ON c.resident_id = r.resident_id
+     LEFT JOIN staff s ON c.staff_id = s.staff_id
      WHERE c.complaint_id = ?`,
     [id]
   )
@@ -129,7 +129,7 @@ export async function updateComplaint(id, data) {
 
 export async function deleteComplaint(id) {
   const [result] = await pool.execute(
-    "DELETE FROM Complaint WHERE complaint_id = ?",
+    "DELETE FROM complaint WHERE complaint_id = ?",
     [id]
   )
 
