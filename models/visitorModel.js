@@ -9,8 +9,15 @@ const visitorSelect = `
     v.phone AS phone,
     a.apartment_no AS apartment,
     v.purpose AS purpose,
-    DATE_FORMAT(v.entry_time, '%Y-%m-%d %H:%i:%s') AS entryTime,
-    DATE_FORMAT(v.exit_time, '%Y-%m-%d %H:%i:%s') AS exitTime,
+    DATE_FORMAT(
+  DATE_ADD(v.entry_time, INTERVAL 330 MINUTE),
+  '%Y-%m-%d %H:%i:%s'
+) AS entryTime,
+
+DATE_FORMAT(
+  DATE_ADD(v.exit_time, INTERVAL 330 MINUTE),
+  '%Y-%m-%d %H:%i:%s'
+) AS exitTime,
     v.status AS status
   FROM visitor v
   LEFT JOIN resident r ON r.resident_id = v.resident_id
