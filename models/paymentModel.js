@@ -25,7 +25,8 @@ const paymentSelect = `
     p.amount_paid AS amount,
     p.method AS method,
     p.reference_no AS referenceNo,
-    p.status AS status
+    p.status AS status,
+    p.payment_proof_url AS paymentProofUrl
   FROM payment p
 `
 
@@ -347,3 +348,23 @@ export const deletePayment = async (id) => {
     connection.release()
   }
 }
+
+export const savePaymentProof = async (id, imageUrl) => {
+  const [existing] = await db.query(
+    "SELECT payment_id FROM payment WHERE payment_id = ?",
+    [id]
+  );
+
+  if (!existing.length) {
+    return null;
+  }
+
+  await db.query(
+    `UPDATE payment
+     SET payment_proof_url = ?
+     WHERE payment_id = ?`,
+    [imageUrl, id]
+  );
+
+  return await getPaymentById(id);
+};

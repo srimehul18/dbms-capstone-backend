@@ -4,8 +4,11 @@ import {
   getPaymentById,
   createPayment,
   updatePayment,
-  deletePayment
-} from "../models/paymentModel.js"
+  deletePayment,
+  savePaymentProof
+} from "../models/paymentModel.js";
+
+import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 
 const getResidentApartmentId = async (residentId) => {
   if (!validId(residentId)) {
@@ -295,3 +298,57 @@ export const removePayment = async (req, res) => {
     return handleDatabaseError(res, error)
   }
 }
+
+
+export const uploadPaymentProof = async (req, res) => {
+  try {
+    if (!validId(req.params.id)) {
+      return res.status(400).json({
+        message: "Invalid payment ID."
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Please select a payment screenshot."
+      });
+    }
+
+    // Check payment exists before uploading to Cloudinary
+    const existingPayment = await getPaymentById(req.params.id);
+
+    if (!existingPayment) {
+      return res.status(404).json({
+        message: "Payment not found."
+      });
+    }
+
+    // Upload image to Cloudinary
+    const result = await uploadToCloudinary(req.file.buffer);
+
+    // Save Cloudinary URL in MySQL
+    const payment = await savePaymentProof(
+      req.params.id,
+      result.secure_url
+    );
+
+    if (!payment) {
+      return res.status(404).json({
+        message: "Payment not found."
+      });
+    }
+
+    return res.status(200).json({
+      message: "Payment proof uploaded successfully.",
+      payment
+    });
+
+  } catch (error) {
+    console.error("Payment proof upload error:", error);
+
+    return res.status(500).json({
+      message: "Unable to upload payment proof."
+    });
+  }
+};
+
