@@ -5,8 +5,14 @@ import {
   createPayment,
   updatePayment,
   deletePayment,
-  savePaymentProof
+  savePaymentProof,
+  getOutstandingBillAmount,
+  createPendingRazorpayPayment,
+  getRazorpayPaymentByOrderId,
+  markRazorpayPaymentSuccessful
 } from "../models/paymentModel.js";
+import razorpay from "../config/razorpay.js";
+import crypto from "crypto";
 
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 
@@ -53,8 +59,11 @@ const validMethods = [
   "UPI",
   "Cash",
   "Bank Transfer",
-  "Card"
+  "Card",
+  "Cheque",
+  "Razorpay"
 ]
+
 
 const validatePayment = (data) => {
   const {
@@ -352,3 +361,164 @@ export const uploadPaymentProof = async (req, res) => {
   }
 };
 
+
+export const createRazorpayOrder = async (req, res) => {
+  try {
+    const { billId, residentId } = req.body;
+
+    if (!validId(billId) || !validId(residentId)) {
+      return res.status(400).json({
+        message: "Valid Bill ID and Resident ID are required."
+      });
+    }
+
+    // Calculate amount on the backend, never trust the frontend amount.
+    const bill = await getOutstandingBillAmount(
+      billId,
+      residentId
+    );
+
+    const amountInPaise = Math.round(
+      bill.amountDue * 100
+    );
+
+    if (amountInPaise < 100) {
+      return res.status(400).json({
+        message: "Minimum Razorpay payment amount is ₹1."
+      });
+    }
+
+    const receipt = `MS${billId}${Date.now()}`;
+
+    // Create order using server-side Razorpay credentials.
+    const order = await razorpay.orders.create({
+      amount: amountInPaise,
+      currency: "INR",
+      receipt,
+      notes: {
+        billId: String(billId),
+        residentId: String(residentId),
+        project: "MySociety"
+      }
+    });
+
+    // Store a Pending payment linked to this order.
+    await createPendingRazorpayPayment({
+      billId,
+      residentId,
+      orderId: order.id,
+      orderAmount: order.amount
+    });
+
+    return res.status(201).json({
+      message: "Razorpay order created successfully.",
+      keyId: process.env.RAZORPAY_KEY_ID,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      billId: bill.billId
+    });
+
+  } catch (error) {
+    console.error("Razorpay order error:", error);
+
+    return res.status(400).json({
+      message: error.message || "Unable to create Razorpay order."
+    });
+  }
+};
+
+
+export const verifyRazorpayPayment = async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    } = req.body;
+
+    if (
+      !razorpay_order_id ||
+      !razorpay_payment_id ||
+      !razorpay_signature
+    ) {
+      return res.status(400).json({
+        message: "Incomplete Razorpay payment details."
+      });
+    }
+
+    // Confirm that this order belongs to our database.
+    const existingPayment = await getRazorpayPaymentByOrderId(
+      razorpay_order_id
+    );
+
+    if (!existingPayment) {
+      return res.status(404).json({
+        message: "Payment order not found."
+      });
+    }
+
+    // Verify the HMAC SHA256 signature.
+    const generatedSignature = crypto
+      .createHmac(
+        "sha256",
+        process.env.RAZORPAY_KEY_SECRET
+      )
+      .update(
+        `${razorpay_order_id}|${razorpay_payment_id}`
+      )
+      .digest("hex");
+
+    const received = Buffer.from(razorpay_signature, "hex");
+    const generated = Buffer.from(generatedSignature, "hex");
+
+    if (
+      received.length !== generated.length ||
+      !crypto.timingSafeEqual(received, generated)
+    ) {
+      return res.status(400).json({
+        message: "Invalid Razorpay payment signature."
+      });
+    }
+
+    // Fetch payment directly from Razorpay.
+    const gatewayPayment = await razorpay.payments.fetch(
+      razorpay_payment_id
+    );
+
+    if (
+      gatewayPayment.order_id !== razorpay_order_id ||
+      Number(gatewayPayment.amount) !==
+        Math.round(Number(existingPayment.amount) * 100) ||
+      gatewayPayment.currency !== "INR"
+    ) {
+      return res.status(400).json({
+        message: "Razorpay payment details do not match our order."
+      });
+    }
+
+    // Only captured payments are recorded as Successful.
+    if (gatewayPayment.status !== "captured") {
+      return res.status(409).json({
+        message: `Payment is not captured yet. Current status: ${gatewayPayment.status}`
+      });
+    }
+
+    const payment = await markRazorpayPaymentSuccessful({
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id
+    });
+
+    return res.status(200).json({
+      message: "Payment verified successfully.",
+      payment
+    });
+
+  } catch (error) {
+    console.error("Razorpay verification error:", error);
+
+    return res.status(500).json({
+      message: "Unable to verify Razorpay payment."
+    });
+  }
+};
