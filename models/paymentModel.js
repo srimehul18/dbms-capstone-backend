@@ -8,6 +8,7 @@ const validStatuses = [
   "Refunded"
 ]
 
+
 const paymentSelect = `
   SELECT
     p.payment_id AS id,
@@ -25,14 +26,13 @@ const paymentSelect = `
     p.amount_paid AS amount,
     p.method AS method,
     p.reference_no AS referenceNo,
-    p.reference_no AS referenceNo,
-p.status AS status,
-p.payment_proof_url AS paymentProofUrl,
-p.gateway_order_id AS gatewayOrderId,
-p.gateway_payment_id AS gatewayPaymentId
-FROM payment p
+    p.status AS status,
+    p.payment_proof_url AS paymentProofUrl,
+    p.gateway_order_id AS gatewayOrderId,
+    p.gateway_payment_id AS gatewayPaymentId
   FROM payment p
-`
+`;
+
 
 const getPaymentByIdWithConnection = async (connection, id) => {
   const [rows] = await connection.query(
